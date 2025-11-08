@@ -1,81 +1,157 @@
-# Image Alternate text Web Application with PyTorch and ViT-GPT2
 
-This project demonstrates a web application for generating alternate text for images using the Vision Transformer (ViT) model combined with GPT-2. Users can upload an image, and the model will generate a descriptive alternate text for the image.
+# CMOS NAND Gate – Schematic, Symbol, and Functional Verification (Cadence Virtuoso)
 
-## Features
+## 🎯 Objective
 
-- Upload an image to generate a alternate text.
-- Uses Vision Transformer (ViT) and GPT-2 for image alternate text.
-- Supports both CPU and GPU (CUDA) for model inference.
+To design, create, and verify the operation of a **2-input CMOS NAND gate** using **Cadence Virtuoso**. The experiment involves schematic capture, symbol creation, testbench setup, and transient simulation to confirm logical behavior.
 
-## Prerequisites
+---
 
-- Python 3.x
-- Flask
-- PyTorch
-- Transformers
-- Pillow
+## 🧠 Theory
 
-## Installation
+A **NAND gate** performs the logical operation:
+[
+Y = \overline{A \cdot B}
+]
 
-Clone the repository:
+For a CMOS implementation:
 
-\`\`\`bash
-git clone https://github.com/your-username/image-alternate text-web-app.git
-cd image-alternate text-web-app
-\`\`\`
+* **Pull-up network (PUN):** Two **PMOS transistors in parallel** (conduct when inputs are low).
+* **Pull-down network (PDN):** Two **NMOS transistors in series** (conduct when inputs are high).
 
-Install the required Python packages:
+This ensures:
 
-\`\`\`bash
-pip install -r requirements.txt
-\`\`\`
+| A | B | Y |
+| - | - | - |
+| 0 | 0 | 1 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 0 |
 
-## Usage
 
-1. Run the Flask web application:
 
-\`\`\`bash
-python app.py
-\`\`\`
+## 🧩 Design Steps
 
-2. Open your web browser and go to `http://127.0.0.1:5000/`.
-3. Upload an image and click on "Predict".
-4. The generated alternate text will be displayed on the result page.
+### 1. Launch Virtuoso and Create a New Cell
 
-## Deployment
+1. Open **Cadence Virtuoso** from your terminal:
 
-For deployment, you can use platforms like Heroku, AWS, or Azure. Make sure to update the host and port settings in `app.run()` for production deployment.
+   ```bash
+   virtuoso &
+   ```
+2. Open your project library (e.g., `EE_Lab` or `CMOS_LIB`).
+3. Create a new cell:
 
-## Directory Structure
+   * **Cell Name:** `NAND_GATE`
+   * **View Type:** `schematic`
+   * **Tool:** Virtuoso Schematic Editor
 
-\`\`\`
-image-alternate text-web-app/
-├── app.py
-├── templates/
-│   ├── index.html
-│   └── result.html
-├── requirements.txt
-└── README.md
-\`\`\`
 
-- `app.py`: Main Flask application file containing the web server and model inference logic.
-- `templates/`: Folder containing HTML templates for the web application.
-- `requirements.txt`: File containing the required Python packages.
 
-## License
+### 2. Schematic Creation
 
-This project is licensed under the MIT License. See `LICENSE` for more details.
+1. Open **Schematic Editor**.
 
-## Contributing
+2. From the **Component Browser**, add:
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+   * **2 PMOS transistors** (from library `gpdk045`, `analogLib`, or `tsmc180nm`, depending on PDK).
+   * **2 NMOS transistors**.
+   * **VDD**, **GND**, and **input/output pins**.
 
-## Acknowledgments
+3. **Connections:**
 
-- Thanks to Hugging Face for providing pre-trained ViT-GPT2 model.
-- Inspired by [Transformers by Hugging Face](https://github.com/huggingface/transformers).
-- ![image](https://github.com/r-krishnapriya/imagecaptioning/assets/141714730/6407be44-6d4e-46bf-a458-fe9bd5321592)
-- ![image](https://github.com/r-krishnapriya/imagecaptioning/assets/141714730/5349bf5c-e797-4010-b28b-2e25ecc0f777)
+   * Connect the **PMOS transistors in parallel** between `VDD` and `output`.
+   * Connect the **NMOS transistors in series** between `output` and `GND`.
+   * Tie the **gates** of the top and bottom transistor pairs to the **inputs A and B**.
+   * Label nodes: `A`, `B`, `Y`, `VDD`, `GND`.
+
+4. Set **transistor parameters:**
+
+   * PMOS W/L = 2 µm / 0.18 µm
+   * NMOS W/L = 1 µm / 0.18 µm
+   * (or adjust per technology library default)
+
+
+
+### 3. Electrical Checks
+
+* Go to **Check and Save** (`Design → Check and Save`) to ensure there are **no connectivity or syntax errors**.
+* Fix any floating nodes or missing connections.
+
+
+
+### 4. Create a Symbol View
+
+1. In the schematic window:
+   `Create → Cellview → From Cellview`
+2. Source view: **schematic**, Target view: **symbol**.
+3. Arrange input/output pins neatly:
+
+   * Left: `A`, `B`
+   * Right: `Y`
+   * Top: `VDD`
+   * Bottom: `GND`
+4. Edit the symbol appearance (rectangle with labeled pins).
+5. Save the symbol.
+
+
+
+### 5. Create Testbench for Functional Verification
+
+1. Create a **new cell** named `NAND_GATE_TB` (testbench).
+
+2. Open **Schematic Editor** and **instantiate** the NAND gate symbol you just created.
+
+3. Add:
+
+   * **Two pulse voltage sources** (`vpulse`) for `A` and `B`.
+   * **DC source** for `VDD` (e.g., 1.8 V).
+   * **Ground (gnd!)** connection.
+   * **Output probe** for node `Y`.
+
+4. Configure input sources (example):
+
+   * **V1 (A):** Pulse from 0 → 1.8 V, period = 20 ns
+   * **V2 (B):** Pulse from 0 → 1.8 V, period = 40 ns, delay = 10 ns
+     This ensures all input combinations are tested over time.
+
+
+
+### 6. Simulation Setup (ADE or ADE Explorer)
+
+1. Open **Launch → ADE L/XL/Explorer**.
+2. Choose **Transient Analysis**:
+
+   * `Stop time = 80 ns`
+   * `Step size = 0.1 ns`
+3. Set **Output to plot:** `V(Y)`, `V(A)`, `V(B)`
+4. Click **Netlist and Run** to start the simulation.
+
+
+
+### 7. Verify Functionality
+
+* After simulation, open the **waveform viewer (ViVA)**.
+* Verify the NAND truth table:
+
+  * Y remains HIGH for all input combinations except when **A = B = HIGH**, Y goes LOW.
+
+
+## 🧾 Results
+
+* Successfully designed and simulated a **2-input CMOS NAND gate**.
+* Verified correct logical function through transient analysis in Cadence Virtuoso.
+* Output matches theoretical NAND truth table.
+
+
+
+
+## 🧰 Tools Used
+
+* **Cadence Virtuoso Schematic Editor** – circuit design
+* **Cadence ADE L/XL** – simulation setup and execution
+* **ViVA** – waveform viewing and analysis
+* **Technology** – gpdk045 / tsmc018 / generic 180nm (any PDK)
+
 
 
